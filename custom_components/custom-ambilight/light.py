@@ -45,7 +45,11 @@ class CustomAmbilight(LightEntity):
     async def async_turn_on(self, **kwargs):
         """Instruct the light to turn on."""
         async with aiohttp.ClientSession() as session:
-            async with session.post(f"https://{self._ip_address}:1926/6/ambilight", auth=aiohttp.BasicAuth(self._username, self._password)) as response:
+            async with session.post(
+                f"https://{self._ip_address}:1926/6/ambilight/power",
+                auth=aiohttp.BasicAuth(self._username, self._password),
+                data='{"power":"on"}'
+            ) as response:
                 if response.status == 200:
                     self._state = True
                     if ATTR_BRIGHTNESS in kwargs:
@@ -54,7 +58,11 @@ class CustomAmbilight(LightEntity):
     async def async_turn_off(self, **kwargs):
         """Instruct the light to turn off."""
         async with aiohttp.ClientSession() as session:
-            async with session.post(f"https://{self._ip_address}:1926/6/ambilight", auth=aiohttp.BasicAuth(self._username, self._password)) as response:
+            async with session.post(
+                f"https://{self._ip_address}:1926/6/ambilight/power",
+                auth=aiohttp.BasicAuth(self._username, self._password),
+                data='{"power":"off"}'
+            ) as response:
                 if response.status == 200:
                     self._state = False
 
