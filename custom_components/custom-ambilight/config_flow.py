@@ -1,4 +1,8 @@
-class CustomAmbilightConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+import voluptuous as vol
+from homeassistant import config_entries
+from .light import CustomAmbilight
+
+class CustomAmbilightConfigFlow(config_entries.ConfigFlow, domain=CustomAmbilight.DOMAIN):
     """Handle a config flow for Custom Ambilight."""
 
     async def async_step_user(self, user_input=None):
