@@ -1,0 +1,9 @@
+{
+  "domain": "CustomAmbilight",
+  "name": "Custom Ambilight",
+  "dependencies": [],
+  "codeowners": ["@aegjoyce"],
+  "requirements": ["aiohttp"],
+  "config_flow": true,
+  "iot_class": "local_polling"
+}
