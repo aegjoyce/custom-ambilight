@@ -1,5 +1,5 @@
 {
-  "domain": "CustomAmbilight",
+  "domain": "custom_ambilight",
   "name": "Custom Ambilight",
   "dependencies": [],
   "codeowners": ["@aegjoyce"],
