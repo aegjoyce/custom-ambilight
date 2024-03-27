@@ -4,6 +4,6 @@
   "dependencies": [],
   "codeowners": ["@aegjoyce"],
   "requirements": ["aiohttp"],
-  "config_flow": true,
+  "config_flow": false,
   "iot_class": "local_polling"
 }
