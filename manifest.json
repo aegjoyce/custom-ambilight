@@ -1,0 +1,15 @@
+{
+  "domain": "custom_ambilight",
+  "name": "Custom Ambilight",
+  "codeowners": [
+    "@aegjoyce"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://www.home-assistant.io/integrations/custom_ambilight",
+  "homekit": {},
+  "iot_class": "local_polling",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": []
+}
