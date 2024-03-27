@@ -29,5 +29,9 @@ async def async_setup(hass: core.HomeAssistant, config: dict):
 
 async def async_setup_entry(hass: core.HomeAssistant, entry: config_entries.ConfigEntry):
     """Set up Custom Ambilight from a config entry."""
-    setup_platform(hass, hass.data[DOMAIN]["config"], add_entities=None)
+    async def async_add_entities(entities, update_before_add=False):
+        """Add new entities to Home Assistant."""
+        hass.add_job(hass.data[DOMAIN]["platforms"]["light"].async_add_entities, entities, update_before_add)
+
+    setup_platform(hass, hass.data[DOMAIN]["config"], async_add_entities)
     return True
