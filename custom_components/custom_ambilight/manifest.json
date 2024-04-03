@@ -11,5 +11,6 @@
   "iot_class": "local_polling",
   "requirements": [],
   "ssdp": [],
+  "version": "0.1.0",
   "zeroconf": []
 }
