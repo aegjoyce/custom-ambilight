@@ -1,17 +1,17 @@
-"""The Custom Ambilight integration."""
+"""Initialisation module for Custom Ambilight integration."""
 
 from __future__ import annotations
 
+from datetime import timedelta
 import logging
-import ssl
-
-import aiohttp
-from aiohttp import BasicAuth
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
+from .api import MyApi
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -21,24 +21,34 @@ PLATFORMS: list[Platform] = [Platform.LIGHT]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Custom Ambilight from a config entry."""
-
     hass.data.setdefault(DOMAIN, {})
 
-    # Create API instance
-    host = entry.data["host"]
-    username = entry.data["username"]
-    password = entry.data["password"]
-    jointspace_api = JointSpaceAPI(host, username, password)
+    # Create API instance with host, username, and password from the config entry
+    api = MyApi(entry.data["host"], entry.data["username"], entry.data["password"])
 
-    # Validate the API connection (and authentication)
-    valid = await jointspace_api.validate_connection()
-    if not valid:
-        return False
+    # Create a data update coordinator
+    coordinator = DataUpdateCoordinator(
+        hass,
+        _LOGGER,
+        name="custom_ambilight",
+        update_method=api.get_data,
+        update_interval=timedelta(seconds=30),
+    )
 
-    # Store an API object for your platforms to access
-    hass.data[DOMAIN][entry.entry_id] = jointspace_api
+    # Fetch initial data
+    await coordinator.async_refresh()
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    if not coordinator.last_update_success:
+        raise ConfigEntryNotReady
+
+    # Store the data update coordinator for your platforms to access
+    coordinator.api = api
+    hass.data[DOMAIN][entry.entry_id] = coordinator
+
+    for platform in PLATFORMS:
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, platform)
+        )
 
     return True
 
@@ -49,24 +59,3 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
-
-
-class JointSpaceAPI:
-    def __init__(self, host, username, password):
-        self.base_url = f"https://{host}:1926/6/ambilight/currentconfiguration"
-        self.auth = BasicAuth(login=username, password=password)
-        self.headers = {"Content-Type": "application/json"}
-        self.ssl_context = ssl.create_default_context()
-        self.ssl_context.check_hostname = False
-        self.ssl_context.verify_mode = ssl.CERT_NONE
-
-    async def validate_connection(self):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                self.base_url,
-                headers=self.headers,
-                auth=self.auth,
-                ssl=self.ssl_context,
-            ) as response:
-                _LOGGER.info(f"Received response status code: {response.status}")
-                return response.status == 200
