@@ -82,7 +82,7 @@ class MyApi:
     async def validate_connection(self) -> bool:
         """Validate the initial connection."""
         try:
-            response = await self.client.get(self.url)
+            response = await self.client.get(f"{self.url}/currentconfiguration")
             return response.status_code == 200
         except Exception as e:
             _LOGGER.error("Failed to connect: {e}")
