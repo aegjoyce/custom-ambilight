@@ -226,7 +226,7 @@ class MyApi:
                 "speed": 255,
                 "algorithm": "MANUAL_HUE",
             }
-            await self.send_data("lounge", color_data)
+            await self.send_data("ambilight/lounge", color_data)
 
         # Check if effect is in kwargs
         elif kwargs.get(ATTR_EFFECT):
