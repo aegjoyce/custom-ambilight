@@ -228,10 +228,9 @@ class MyApi:
             }
             await self.send_data("ambilight/lounge", color_data)
 
-        # Check if effect is in kwargs
         elif kwargs.get(ATTR_EFFECT):
             friendly_name = kwargs.get(ATTR_EFFECT)
-            for actual_name, effect in self.EFFECTS.items():
+            for effect in self.EFFECTS.values():
                 if effect["friendly_name"] == friendly_name:
                     # Check if the light is currently in HS mode
                     if self.get_effect() is None:
@@ -239,12 +238,8 @@ class MyApi:
                         await self.send_data("ambilight/power", {"power": "off"})
                     # Then apply the new effect
                     await self.send_data(
-                        "ambilight/currentconfiguration",
-                        {
-                            "styleName": effect["styleName"],
-                            "isExpert": False,
-                            "menuSetting": actual_name,
-                        },
+                        effect["endpoint"],
+                        effect["data"],
                     )
                     break
 
