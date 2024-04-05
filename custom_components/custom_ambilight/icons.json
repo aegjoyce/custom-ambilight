@@ -1,0 +1,9 @@
+{
+    "entity": {
+      "light": {
+        "ambilight": {
+          "default": "mdi:television-ambient-light"
+        }
+    }
+}
+}

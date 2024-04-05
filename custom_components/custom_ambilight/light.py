@@ -10,6 +10,7 @@ from homeassistant.components.light import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
@@ -18,19 +19,33 @@ from .const import DOMAIN
 class CustomAmbilightLight(CoordinatorEntity, LightEntity):
     """Representation of a Custom Ambilight light."""
 
-    def __init__(self, coordinator, entry_id) -> None:
+    _attr_translation_key = "ambilight"
+    _attr_has_entity_name = True
+
+    def __init__(self, coordinator) -> None:
         """Initialize the Custom Ambilight light."""
         super().__init__(coordinator)
-        self.entry_id = entry_id
         self.api = coordinator.api
         self._attr_supported_features = LightEntityFeature.EFFECT
         self._attr_supported_color_modes = {ColorMode.HS}
         self._attr_color_mode = ColorMode.HS
+        self._attr_unique_id = self.api.serialnumber
 
     @property
-    def unique_id(self) -> str:
-        """Return a unique ID."""
-        return self.api.username
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.api.serialnumber)},
+            name=self.api.name,
+            manufacturer="Philips",
+            model=self.api.model,
+            sw_version=self.api.softwareversion,
+        )
+
+    # @property
+    # def icon(self) -> str | None:
+    #     """Icon of the entity."""
+    #     return "mdi:television-ambient-light"
 
     @property
     def is_on(self):
@@ -78,6 +93,4 @@ async def async_setup_entry(
 ):
     """Set up Custom Ambilight light based on a config entry."""
     api = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        [CustomAmbilightLight(api, entry.entry_id)], update_before_add=True
-    )
+    async_add_entities([CustomAmbilightLight(api)], update_before_add=True)

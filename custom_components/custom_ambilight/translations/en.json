@@ -17,5 +17,12 @@
                 }
             }
         }
+    },
+    "entity": {
+        "light": {
+            "ambilight": {
+                "name": "Ambilight"
+            }
+        }
     }
 }

@@ -26,6 +26,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Create API instance with host, username, and password from the config entry
     api = MyApi(entry.data["host"], entry.data["username"], entry.data["password"])
 
+    # Validate the API connection
+    if not await api.validate_connection():
+        raise ConfigEntryNotReady
+
     # Create a data update coordinator
     coordinator = DataUpdateCoordinator(
         hass,

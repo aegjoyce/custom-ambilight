@@ -1,9 +1,12 @@
 """API module for Custom Ambilight integration."""
 
 import asyncio
+from base64 import b64decode
 import logging
 from typing import Any
 
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.padding import PKCS7
 import httpx
 
 from homeassistant.components.light import ATTR_BRIGHTNESS, ATTR_EFFECT, ATTR_HS_COLOR
@@ -23,7 +26,7 @@ class MyApi:
         self.host = host
         self.username = username
         self.password = password
-        self.url = f"https://{host}:1926/6/ambilight"
+        self.url = f"https://{host}:1926/6"
         self.client = httpx.AsyncClient(
             auth=httpx.DigestAuth(username, password), verify=False
         )
@@ -33,7 +36,7 @@ class MyApi:
 
     async def get_data(self) -> Any:
         """Fetch data from the API."""
-        response = await self.client.get(f"{self.url}/currentconfiguration")
+        response = await self.client.get(f"{self.url}/ambilight/currentconfiguration")
         await asyncio.sleep(RATE_LIMIT)
         self._data = response.json()
 
@@ -79,13 +82,40 @@ class MyApi:
         await asyncio.sleep(RATE_LIMIT)
         return response.status_code
 
+    def cbc_decode(self, key: bytes, data: str):
+        """Decode encrypted fields based on shared key."""
+        if data == "":
+            return ""
+        raw = b64decode(data)
+        assert len(raw) >= 16, f"Length of data too short: '{data}'"
+        decryptor = Cipher(algorithms.AES(key[0:16]), modes.CBC(raw[0:16])).decryptor()
+        unpadder = PKCS7(128).unpadder()
+        result = decryptor.update(raw[16:]) + decryptor.finalize()
+        result = unpadder.update(result) + unpadder.finalize()
+        return result.decode("utf-8")
+
     async def validate_connection(self) -> bool:
         """Validate the initial connection."""
         try:
-            response = await self.client.get(f"{self.url}/currentconfiguration")
-            return response.status_code == 200
+            response = await self.client.get(f"{self.url}/system")
+            if response.status_code == 200:
+                # Assuming the response is a JSON object
+                data = response.json()
+                # Decode the password
+                key = b64decode(
+                    "ZmVay1EQVFOaZhwQ4Kv81ypLAZNczV9sG4KkseXWn1NEk6cXmPKO/MCa9sryslvLCFMnNe4Z4CPXzToowvhHvA=="
+                )
+                for k, encrypted_value in data.items():
+                    if k.endswith("_encrypted"):
+                        decrypted_key = k.replace("_encrypted", "")
+                        decrypted_value = self.cbc_decode(key, encrypted_value.strip())
+                        setattr(self, decrypted_key, decrypted_value)
+                    elif k == "name":
+                        setattr(self, k, encrypted_value)
+                return True
+            return False
         except Exception as e:
-            _LOGGER.error("Failed to connect: {e}")
+            _LOGGER.error(f"Failed to connect: {e}")
             return False
 
     def get_is_on(self):
@@ -161,7 +191,7 @@ class MyApi:
             # If the light is off, activate the Natural effect first
             if not self.get_is_on():
                 await self.send_data(
-                    "currentconfiguration",
+                    "ambilight/currentconfiguration",
                     {
                         "styleName": "FOLLOW_VIDEO",
                         "isExpert": False,
@@ -206,10 +236,10 @@ class MyApi:
                     # Check if the light is currently in HS mode
                     if self.get_effect() is None:
                         # If it is, turn off the light first
-                        await self.send_data("power", {"power": "off"})
+                        await self.send_data("ambilight/power", {"power": "off"})
                     # Then apply the new effect
                     await self.send_data(
-                        "currentconfiguration",
+                        "ambilight/currentconfiguration",
                         {
                             "styleName": effect["styleName"],
                             "isExpert": False,
@@ -242,7 +272,7 @@ class MyApi:
         # If the current effect is None, switch to the Natural effect
         if self.get_effect() is None:
             await self.send_data(
-                "currentconfiguration",
+                "ambilight/currentconfiguration",
                 {
                     "styleName": "FOLLOW_VIDEO",
                     "isExpert": False,
@@ -250,4 +280,4 @@ class MyApi:
                 },
             )
         # Turn off the light
-        await self.send_data("power", {"power": "off"})
+        await self.send_data("ambilight/power", {"power": "off"})
