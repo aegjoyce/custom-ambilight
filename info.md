@@ -1,5 +1,7 @@
 # Custom Ambilight integration for Home Assistant
 
+![installation_badge](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.custom_ambilight)
+
 ## Why does this exist?
 The core PhilipsJS integration is fantastic but has a few issues:
  - The JointSpace API on Philips TVs is fragile and temperamental - it doesn't like having lots of API calls in quick succession and can slow down or crash the TV after a while
