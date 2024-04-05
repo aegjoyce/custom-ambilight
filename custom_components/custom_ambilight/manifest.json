@@ -9,6 +9,7 @@
   "documentation": "https://www.home-assistant.io/integrations/custom_ambilight",
   "homekit": {},
   "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/aegjoyce/custom-ambilight/issues",
   "requirements": [],
   "ssdp": [],
   "version": "0.1.0",
