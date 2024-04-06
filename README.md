@@ -1,6 +1,6 @@
 # Custom Ambilight integration for Home Assistant
 
-![installation_badge](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.custom_ambilight) ![HassFest tests](https://github.com/aegjoyce/custom-ambilight/workflows/Hassfest/badge.svg) ![Validate with HACS](https://github.com/aegjoyce/custom-ambilight/workflows/HACS/badge.svg)
+![installation_badge](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.custom_ambilight) ![hassfest](https://github.com/aegjoyce/custom-ambilight/workflows/hassfest/badge.svg) ![hacs](https://github.com/aegjoyce/custom-ambilight/workflows/hacs/badge.svg)
 
 ## Why does this exist?
 The core PhilipsJS integration is fantastic but has a few issues:
