@@ -1,8 +1,9 @@
-# Custom Ambilight integration for Home Assistant
+# Custom Ambilight
+### An integration for Home Assistant
 
 ![installation_badge](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.custom_ambilight) ![hassfest](https://github.com/aegjoyce/custom-ambilight/workflows/hassfest/badge.svg) ![hacs](https://github.com/aegjoyce/custom-ambilight/workflows/hacs/badge.svg)
 
-## Why does this exist?
+### Why does this exist?
 The core PhilipsJS integration is fantastic but has a few issues:
  - The JointSpace API on Philips TVs is fragile and temperamental - it doesn't like having lots of API calls in quick succession and can slow down or crash the TV after a while
  - The Ambilight implementation does not work consistently with all effect types due to various quirks in the JointSpace API
@@ -14,7 +15,7 @@ This custom integration fixes the above issues by:
 It also:
  - Enables the use of all Ambilight modes including modes hidden in the TV UI
 
-## How do I install it?
+### How do I install it?
 Currently this integration requires:
  - A Philips Ambilight TV running version 6 of the JointSpace API
  - The IP address of your TV
@@ -24,6 +25,6 @@ It is also highly recommended to set up the Alexa app and follow the instruction
 
 Install via HACS, restart your Home Assistant, and then set up the Custom Ambilight integration in the UI.
 
-## Future plans
+### Future plans
  - Automatic registration from IP address without having to get a username and password
  - Support for other API versions
