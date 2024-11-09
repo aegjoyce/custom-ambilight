@@ -145,49 +145,4 @@ EFFECTS = {
             "menuSetting": "MODE_RANDOM",
         },
     },
-    "HOT_LAVA": {
-        "friendly_name": "Hot Lava",
-        "endpoint": "menuitems/settings/update",
-        "data": {
-            "values": [
-                {"value": {"Nodeid": 2131230770, "data": {"selected_item": 201}}}
-            ]
-        },
-    },
-    "DEEP_WATER": {
-        "friendly_name": "Deep Water",
-        "endpoint": "menuitems/settings/update",
-        "data": {
-            "values": [
-                {"value": {"Nodeid": 2131230770, "data": {"selected_item": 202}}}
-            ]
-        },
-    },
-    "FRESH_NATURE": {
-        "friendly_name": "Fresh Nature",
-        "endpoint": "menuitems/settings/update",
-        "data": {
-            "values": [
-                {"value": {"Nodeid": 2131230770, "data": {"selected_item": 203}}}
-            ]
-        },
-    },
-    "ISF": {
-        "friendly_name": "Warm White",
-        "endpoint": "menuitems/settings/update",
-        "data": {
-            "values": [
-                {"value": {"Nodeid": 2131230770, "data": {"selected_item": 207}}}
-            ]
-        },
-    },
-    "CUSTOM_COLOR": {
-        "friendly_name": "Custom Color",
-        "endpoint": "menuitems/settings/update",
-        "data": {
-            "values": [
-                {"value": {"Nodeid": 2131230770, "data": {"selected_item": 208}}}
-            ]
-        },
-    },
 }
