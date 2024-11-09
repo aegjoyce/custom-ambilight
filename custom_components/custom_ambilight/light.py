@@ -22,30 +22,25 @@ class CustomAmbilightLight(CoordinatorEntity, LightEntity):
     _attr_translation_key = "ambilight"
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator) -> None:
+    def __init__(self, coordinator, entry_id) -> None:
         """Initialize the Custom Ambilight light."""
         super().__init__(coordinator)
         self.api = coordinator.api
         self._attr_supported_features = LightEntityFeature.EFFECT
         self._attr_supported_color_modes = {ColorMode.HS}
         self._attr_color_mode = ColorMode.HS
-        self._attr_unique_id = self.api.serialnumber
+        self._attr_unique_id = entry_id  # Use the config entry ID as the unique ID
 
     @property
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            identifiers={(DOMAIN, self.api.serialnumber)},
-            name=self.api.name,
+            identifiers={(DOMAIN, self._attr_unique_id)},
+            name="Philips Ambilight",
             manufacturer="Philips",
-            model=self.api.model,
-            sw_version=self.api.softwareversion,
+            model="Ambilight",
+            sw_version="1.0",
         )
-
-    # @property
-    # def icon(self) -> str | None:
-    #     """Icon of the entity."""
-    #     return "mdi:television-ambient-light"
 
     @property
     def is_on(self):
@@ -55,13 +50,11 @@ class CustomAmbilightLight(CoordinatorEntity, LightEntity):
     @property
     def brightness(self):
         """Return the brightness of the light."""
-        # You need to implement how to get the brightness from the API
         return self.api.get_brightness()
 
     @property
     def hs_color(self):
         """Return the hue and saturation color value [float, float]."""
-        # You need to implement how to get the color from the API
         return self.api.get_hs_color()
 
     @property
@@ -72,7 +65,6 @@ class CustomAmbilightLight(CoordinatorEntity, LightEntity):
     @property
     def effect(self):
         """Return the current effect."""
-        # You need to implement how to get the effect from the API
         return self.api.get_effect()
 
     async def async_turn_on(self, **kwargs):
@@ -92,5 +84,5 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ):
     """Set up Custom Ambilight light based on a config entry."""
-    api = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([CustomAmbilightLight(api)], update_before_add=True)
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([CustomAmbilightLight(coordinator, entry.entry_id)], update_before_add=True)
