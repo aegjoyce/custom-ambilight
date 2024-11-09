@@ -21,15 +21,11 @@ RATE_LIMIT = 0.1
 class MyApi:
     """The Custom Ambilight API."""
 
-    def __init__(self, host: str, username: str, password: str) -> None:
+    def __init__(self, host: str) -> None:
         """Initialise the API."""
         self.host = host
-        self.username = username
-        self.password = password
-        self.url = f"https://{host}:1926/6"
-        self.client = httpx.AsyncClient(
-            auth=httpx.DigestAuth(username, password), verify=False
-        )
+        self.url = f"http://{host}:1925/6"
+        self.client = httpx.AsyncClient(verify=False)
         self.EFFECTS = EFFECTS
         self.previous_state = None
         self._data = {}
@@ -60,9 +56,7 @@ class MyApi:
             }
             # Reset the connection
             await self.client.aclose()
-            self.client = httpx.AsyncClient(
-                auth=httpx.DigestAuth(self.username, self.password), verify=False
-            )
+            self.client = httpx.AsyncClient(verify=False)
             # Restore the previous state
             if any(
                 key in self.previous_state
@@ -98,22 +92,7 @@ class MyApi:
         """Validate the initial connection."""
         try:
             response = await self.client.get(f"{self.url}/system")
-            if response.status_code == 200:
-                # Assuming the response is a JSON object
-                data = response.json()
-                # Decode the password
-                key = b64decode(
-                    "ZmVay1EQVFOaZhwQ4Kv81ypLAZNczV9sG4KkseXWn1NEk6cXmPKO/MCa9sryslvLCFMnNe4Z4CPXzToowvhHvA=="
-                )
-                for k, encrypted_value in data.items():
-                    if k.endswith("_encrypted"):
-                        decrypted_key = k.replace("_encrypted", "")
-                        decrypted_value = self.cbc_decode(key, encrypted_value.strip())
-                        setattr(self, decrypted_key, decrypted_value)
-                    elif k == "name":
-                        setattr(self, k, encrypted_value)
-                return True
-            return False
+            return response.status_code == 200
         except Exception as e:
             _LOGGER.error(f"Failed to connect: {e}")
             return False
