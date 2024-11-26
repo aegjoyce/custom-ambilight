@@ -23,8 +23,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Custom Ambilight from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    # Create API instance with host, username, and password from the config entry
-    api = MyApi(entry.data["host"], entry.data["username"], entry.data["password"])
+    # Create API instance with host, connection type, username, and password from the config entry
+    api = MyApi(entry.data["host"], entry.data["type"], entry.data.get("username"), entry.data.get("password"))
 
     # Validate the API connection
     if not await api.validate_connection():
@@ -53,7 +53,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
-
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""

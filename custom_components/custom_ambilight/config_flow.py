@@ -8,7 +8,7 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_TYPE
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
@@ -20,8 +20,9 @@ _LOGGER = logging.getLogger(__name__)
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
-        vol.Required(CONF_USERNAME): str,
-        vol.Required(CONF_PASSWORD): str,
+        vol.Required(CONF_TYPE, default="https"): vol.In(["http", "https"]),
+        vol.Optional(CONF_USERNAME): str,
+        vol.Optional(CONF_PASSWORD): str,
     }
 )
 
@@ -32,16 +33,11 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
     # Create API instance
-    api = MyApi(data[CONF_HOST], data[CONF_USERNAME], data[CONF_PASSWORD])
+    api = MyApi(data[CONF_HOST], data[CONF_TYPE], data.get(CONF_USERNAME), data.get(CONF_PASSWORD))
 
     # Validate the API connection (and authentication)
     if not await api.validate_connection():
         raise InvalidAuth
-
-    # If you cannot connect:
-    # throw CannotConnect
-    # If the authentication is wrong:
-    # InvalidAuth
 
     # Return info that you want to store in the config entry.
     return {"title": "Custom Ambilight"}

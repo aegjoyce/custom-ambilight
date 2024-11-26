@@ -21,14 +21,15 @@ RATE_LIMIT = 0.1
 class MyApi:
     """The Custom Ambilight API."""
 
-    def __init__(self, host: str, username: str, password: str) -> None:
+    def __init__(self, host: str, connection_type: str, username: str = None, password: str = None) -> None:
         """Initialise the API."""
         self.host = host
+        self.connection_type = connection_type
         self.username = username
         self.password = password
-        self.url = f"https://{host}:1926/6"
+        self.url = f"{connection_type}://{host}:1926/6" if connection_type == "https" else f"http://{host}:1925/6"
         self.client = httpx.AsyncClient(
-            auth=httpx.DigestAuth(username, password), verify=False
+            auth=httpx.DigestAuth(username, password) if connection_type == "https" else None, verify=False
         )
         self.EFFECTS = EFFECTS
         self.previous_state = None
