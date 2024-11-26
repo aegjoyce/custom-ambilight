@@ -19,7 +19,12 @@ It also:
 Currently this integration requires:
  - A Philips Ambilight TV running version 6 of the JointSpace API
  - The IP address of your TV
+ - A paired username and password for your TV, obtained using [this script](https://github.com/suborb/philips_android_tv/tree/master)
 
 It is also highly recommended to set up the Alexa app and follow the instructions to keep the TV connected even when off.
 
 Install via HACS, restart your Home Assistant, and then set up the Custom Ambilight integration in the UI.
+
+### Future plans
+ - Automatic registration from IP address without having to get a username and password
+ - Support for other API versions
