@@ -20,6 +20,8 @@ _LOGGER = logging.getLogger(__name__)
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
+        vol.Required(CONF_USERNAME): str,
+        vol.Required(CONF_PASSWORD): str,
     }
 )
 
@@ -30,11 +32,16 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
     # Create API instance
-    api = MyApi(data[CONF_HOST])
+    api = MyApi(data[CONF_HOST], data[CONF_USERNAME], data[CONF_PASSWORD])
 
-    # Validate the API connection
+    # Validate the API connection (and authentication)
     if not await api.validate_connection():
-        raise CannotConnect
+        raise InvalidAuth
+
+    # If you cannot connect:
+    # throw CannotConnect
+    # If the authentication is wrong:
+    # InvalidAuth
 
     # Return info that you want to store in the config entry.
     return {"title": "Custom Ambilight"}

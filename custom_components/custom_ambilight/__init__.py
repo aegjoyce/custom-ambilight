@@ -23,8 +23,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Custom Ambilight from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    # Create API instance with host from the config entry
-    api = MyApi(entry.data["host"])
+    # Create API instance with host, username, and password from the config entry
+    api = MyApi(entry.data["host"], entry.data["username"], entry.data["password"])
 
     # Validate the API connection
     if not await api.validate_connection():
