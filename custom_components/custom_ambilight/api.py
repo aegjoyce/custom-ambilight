@@ -4,6 +4,7 @@ import asyncio
 from base64 import b64decode
 import logging
 from typing import Any
+from urllib.parse import urlparse
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
@@ -27,7 +28,14 @@ class MyApi:
         self.connection_type = connection_type
         self.username = username
         self.password = password
-        self.url = f"{connection_type}://{host}:1926/6" if connection_type == "https" else f"http://{host}:1925/6"
+
+        # Parse the host to check for an existing port
+        parsed_host = urlparse(f"{connection_type}://{host}")
+        port = parsed_host.port or (1926 if connection_type == "https" else 1925)
+        hostname = parsed_host.hostname
+
+        # Construct the URL with the correct port
+        self.url = f"{connection_type}://{hostname}:{port}/6"
         self.client = httpx.AsyncClient(
             auth=httpx.DigestAuth(username, password) if connection_type == "https" else None, verify=False
         )

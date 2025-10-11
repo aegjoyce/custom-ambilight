@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+import random
+import string
+from base64 import b64decode
+from Crypto.Hash import HMAC, SHA
 
 import voluptuous as vol
 
@@ -36,6 +40,63 @@ STEP_HTTPS_SCHEMA = vol.Schema(
         vol.Required(CONF_PASSWORD): str,
     }
 )
+
+# Helper function to create a device ID
+def create_device_id():
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+
+# Helper function to create a signature
+def create_signature(secret_key: str, to_sign: bytes) -> str:
+    sign = HMAC.new(b64decode(secret_key), to_sign, SHA)
+    return sign.hexdigest()
+
+SECRET_KEY = "ZmVay1EQVFOaZhwQ4Kv81ypLAZNczV9sG4KkseXWn1NEk6cXmPKO/MCa9sryslvLCFMnNe4Z4CPXzToowvhHvA=="
+
+async def pair_device(host: str) -> dict:
+    """Pair with the Philips TV and retrieve credentials."""
+    import aiohttp
+
+    device_id = create_device_id()
+    device_spec = {
+        "device_name": "CustomAmbilight",
+        "device_os": "Android",
+        "app_name": "HomeAssistant",
+        "type": "native",
+        "id": device_id,
+        "app_id": "app.id",
+    }
+
+    async with aiohttp.ClientSession() as session:
+        # Step 1: Send pairing request
+        pair_url = f"https://{host}:1926/6/pair/request"
+        pair_data = {"scope": ["read", "write", "control"], "device": device_spec}
+        async with session.post(pair_url, json=pair_data, ssl=False) as response:
+            if response.status != 200:
+                raise CannotConnect
+            pair_response = await response.json()
+
+        # Step 2: Prompt user for PIN
+        pin = input("Enter the PIN displayed on the TV: ")
+
+        # Step 3: Send grant request
+        grant_url = f"https://{host}:1926/6/pair/grant"
+        auth_timestamp = pair_response["timestamp"]
+        auth_signature = create_signature(SECRET_KEY, f"{auth_timestamp}{pin}".encode())
+        grant_data = {
+            "auth_AppId": "1",
+            "pin": pin,
+            "auth_timestamp": auth_timestamp,
+            "auth_signature": auth_signature,
+        }
+        async with session.post(grant_url, json=grant_data, ssl=False) as response:
+            if response.status != 200:
+                raise InvalidAuth
+            grant_response = await response.json()
+
+    return {
+        CONF_USERNAME: device_id,
+        CONF_PASSWORD: grant_response["auth_key"],
+    }
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
@@ -109,6 +170,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             user_input[CONF_TYPE] = "https"
             try:
+                # Automatically pair and retrieve credentials
+                credentials = await pair_device(user_input[CONF_HOST])
+                user_input.update(credentials)
+
                 info = await validate_input(self.hass, user_input)
                 return self.async_create_entry(title=info["title"], data=user_input)
             except CannotConnect:
