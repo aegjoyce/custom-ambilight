@@ -3,6 +3,7 @@
 import asyncio
 from base64 import b64decode
 import logging
+import time
 from typing import Any
 from urllib.parse import urlparse
 
@@ -11,12 +12,28 @@ from cryptography.hazmat.primitives.padding import PKCS7
 import httpx
 
 from homeassistant.components.light import ATTR_BRIGHTNESS, ATTR_EFFECT, ATTR_HS_COLOR
+from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .effects import EFFECTS
 
 _LOGGER = logging.getLogger(__name__)
 # Define the rate limit (in seconds)
 RATE_LIMIT = 0.1
+# Philips TVs accept new (TLS) connections slowly, especially while running
+# Ambilight in standby, which can exceed httpx's 5s default connect timeout
+TIMEOUT = httpx.Timeout(15.0, connect=10.0)
+# Delay before retrying a transient connection error
+RETRY_DELAY = 3.0
+# Time after the last successful poll before the TV is considered unreachable.
+# Philips TVs intermittently drop off the network for 15-60 seconds (the TV
+# keeps running Ambilight while its API is unreachable), so tolerate short
+# dropouts instead of flipping the entity unavailable on every failed poll
+STALE_GRACE = 90.0
+
+
+def _err_desc(err: Exception) -> str:
+    """Return a description of the error, including the class for empty messages."""
+    return str(err) or type(err).__name__
 
 
 class MyApi:
@@ -37,17 +54,36 @@ class MyApi:
         # Construct the URL with the correct port
         self.url = f"{connection_type}://{hostname}:{port}/6"
         self.client = httpx.AsyncClient(
-            auth=httpx.DigestAuth(username, password) if connection_type == "https" else None, verify=False
+            auth=httpx.DigestAuth(username, password) if connection_type == "https" else None,
+            verify=False,
+            timeout=TIMEOUT,
         )
         self.EFFECTS = EFFECTS
         self.previous_state = None
         self._data = {}
+        self._last_success: float | None = None
 
     async def get_data(self) -> Any:
         """Fetch data from the API."""
-        response = await self.client.get(f"{self.url}/ambilight/currentconfiguration")
+        # Retry once on transient transport errors (e.g. slow TLS handshake
+        # while the TV is in standby) so the coordinator does not flag the
+        # entity unavailable on every hiccup
+        for attempt in range(2):
+            try:
+                response = await self.client.get(f"{self.url}/ambilight/currentconfiguration")
+                break
+            except httpx.TransportError as err:
+                if attempt == 1:
+                    raise UpdateFailed(
+                        f"Error communicating with TV: {_err_desc(err)}"
+                    ) from err
+                _LOGGER.warning(
+                    "Transient connection error (%s), retrying", _err_desc(err)
+                )
+                await asyncio.sleep(RETRY_DELAY)
         await asyncio.sleep(RATE_LIMIT)
         self._data = response.json()
+        self._last_success = time.monotonic()
 
         # Check if the response matches the glitch state
         glitch_state = {
@@ -70,7 +106,9 @@ class MyApi:
             # Reset the connection
             await self.client.aclose()
             self.client = httpx.AsyncClient(
-                auth=httpx.DigestAuth(self.username, self.password), verify=False
+                auth=httpx.DigestAuth(self.username, self.password),
+                verify=False,
+                timeout=TIMEOUT,
             )
             # Restore the previous state
             if any(
@@ -126,6 +164,12 @@ class MyApi:
         except Exception as e:
             _LOGGER.error(f"Failed to connect: {e}")
             return False
+
+    def is_available(self, max_age: float = STALE_GRACE) -> bool:
+        """Return True if the TV API responded recently."""
+        return self._last_success is not None and (
+            time.monotonic() - self._last_success
+        ) <= max_age
 
     def get_is_on(self):
         """Get the current power status from the data."""

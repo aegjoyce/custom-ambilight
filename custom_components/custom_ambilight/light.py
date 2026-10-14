@@ -43,6 +43,11 @@ class CustomAmbilightLight(CoordinatorEntity, LightEntity):
         )
 
     @property
+    def available(self) -> bool:
+        """Return True if the TV API responded recently, tolerating short dropouts."""
+        return self.api.is_available()
+
+    @property
     def is_on(self):
         """Return true if the light is on."""
         return self.api.get_is_on()
